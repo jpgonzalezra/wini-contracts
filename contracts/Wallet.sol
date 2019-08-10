@@ -105,14 +105,14 @@ contract Wallet {
             revert("Unknown error");
         }
 
-        // Read the signer from storage, avoid multiples 'sload' ops
+        // Read the signer from storage, avoid multiple 'sload' ops
         address _signer = signer();
 
         // The signer 'INVALID_ADDRESS' is considered invalid and it will always throw
         // this is meant to disable the wallet safely
         require(_signer != INVALID_ADDRESS, "Signer is not a valid address");
 
-        // Validate is the msg.sender is the signer or if the provided signature is valid
+        // Validate the _signer is the msg.sender or that the provided signature is valid
         require(_signer == msg.sender || _signer == ECDSA.recover(id, _signature), "Invalid signature");
 
         // Save the receipt before performing any other action
