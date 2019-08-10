@@ -1,0 +1,51 @@
+{
+  "name": "wini-contracts",
+  "version": "1.0.0",
+  "description": "Ethereum meta transactions contract, inspired by marmo.",
+  "license": "MIT",
+  "files": [
+    "/contracts/**/*.sol",
+    "/build/contracts/*.json",
+    "!/contracts/mocks",
+    "!/contracts/examples"
+  ],
+  "scripts": {
+    "console": "truffle console",
+    "lint": "npm run lint:js && npm run lint:sol",
+    "lint:fix": "npm run lint:js:fix",
+    "lint:js": "eslint .",
+    "lint:js:fix": "eslint . --fix",
+    "lint:sol": "solhint --max-warnings 0 \"contracts/**/*.sol\"",
+    "test": "scripts/test.sh"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/threelab/wini-contracts"
+  },
+  "keywords": [
+    "Ethereum",
+    "Relay",
+    "Meta-Tx",
+    "Contracts"
+  ],
+  "bugs": {
+    "url": "https://github.com/threelab/wini-contracts/issues"
+  },
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "eslint": "^4.19.1",
+    "eslint-config-standard": "^10.2.1",
+    "eslint-plugin-import": "^2.13.0",
+    "eslint-plugin-mocha-no-only": "^1.1.0",
+    "eslint-plugin-node": "^5.2.1",
+    "eslint-plugin-promise": "^3.8.0",
+    "eslint-plugin-standard": "^3.1.0",
+    "ethereumjs-util": "^6.0.0",
+    "ganache-cli": "^6.4.3",
+    "solhint": "^2.1.0",
+    "truffle": "^5.0.18",
+    "openzeppelin-solidity": "^2.3.0",
+    "openzeppelin-test-helpers": "^0.4.2",
+    "solc": "0.5.10"
+  }
+}
