@@ -134,7 +134,7 @@ jobs:
             # Run Solidity lint
             - run:
                 name: Solhint
-                command: ./node_modules/.bin/solhint --max-warnings 0 \"contracts/**/*.sol\"
+                command: ./node_modules/.bin/solhint \"contracts/**/*.sol\"
 
 workflows:
     version: 2
