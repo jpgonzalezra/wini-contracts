@@ -15,3 +15,10 @@ Join our social media channels and become part of Wallet’s Community!
 
 * [Web](https://www.winiwallet.io)
 * [Github](https://github.com/treelab)
+
+### Reference
+
+* [Gnosis](https://github.com/gnosis)
+* [EIP1-776](https://github.com/ethereum/EIPs/issues/1776)
+* [Marmo](https://github.com/ripio/marmo-contracts)
+* [Aragon](https://github.com/aragon/prototypes)
