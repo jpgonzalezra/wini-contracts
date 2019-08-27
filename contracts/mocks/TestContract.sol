@@ -7,7 +7,7 @@ contract TestOutOfGasContract {
         _fallback();
     }
 
-    function _fallback() internal {
+    function _fallback() internal pure {
         uint256 a = 1;
         while (true) {
             a++;
