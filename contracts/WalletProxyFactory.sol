@@ -9,7 +9,7 @@ import "./WalletProxy.sol";
 ///
 /// @dev All wallets are proxies pointing to a single
 /// source contract, to make deployment costs viable
-contract WalletProxyFactory is ProxyFactory {
+contract WalletProxyFactory is WalletProxy {
     
     // Random Invalid signer address, intents signed with this address are invalid
     address private constant INVALID_ADDRESS = address(0x00000000000000000000000000000FFFfffFFFFF);

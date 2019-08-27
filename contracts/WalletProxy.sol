@@ -2,13 +2,13 @@ pragma solidity 0.5.10;
 
 import "./Wallet.sol";
 
-/// @title ProxyWallet
-contract ProxyFactory {
+/// @title WalletProxy
+contract WalletProxy {
     
     /// @notice calculate wallet contract byteCode for Create2
     /// @param _source signer address
     /// @return bytecode wallet contract
-    function getInitCode(address _source) public returns (bytes memory)  {
+    function getInitCode(address _source) public pure returns (bytes memory)  {
         bytes memory args = new bytes(32);
         // solhint-disable-next-line no-inline-assembly
         assembly { mstore(add(args, 0x20), _source) }
@@ -16,7 +16,7 @@ contract ProxyFactory {
         return calculateInitcode(args);
     }
     
-    function calculateInitcode(bytes memory args) internal view returns (bytes memory) {
+    function calculateInitcode(bytes memory args) internal pure returns (bytes memory) {
         // Memory byte array that contains the creation bytecode of the contract. 
         bytes memory code = type(Wallet).creationCode;
 
