@@ -16,7 +16,8 @@
     "lint:js": "eslint .",
     "lint:js:fix": "eslint . --fix",
     "lint:sol": "solhint --max-warnings 0 \"contracts/**/*.sol\"",
-    "test": "scripts/test.sh"
+    "test": "scripts/test.sh",
+    "flat": "bash scripts/make_flat.sh"
   },
   "repository": {
     "type": "git",
@@ -46,6 +47,7 @@
     "truffle": "^5.0.18",
     "openzeppelin-solidity": "^2.3.0",
     "openzeppelin-test-helpers": "^0.4.2",
-    "solc": "0.5.10"
+    "solc": "0.5.10",
+    "solidity-flattener": "github:poanetwork/solidity-flattener#master"
   }
 }
