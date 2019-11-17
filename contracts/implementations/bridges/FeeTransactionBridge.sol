@@ -5,7 +5,7 @@ import "./../../common/Relayable.sol";
 import "openzeppelin-solidity/contracts/utils/ReentrancyGuard.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 
-contract FeeTransactionManager is Relayable, ReentrancyGuard {
+contract FeeTransactionBridge is Relayable, ReentrancyGuard {
     
     IERC20 public token;
         
