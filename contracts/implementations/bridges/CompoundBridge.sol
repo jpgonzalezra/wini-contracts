@@ -4,7 +4,7 @@ import "./../../Wallet.sol";
 import "./../../interfaces/ICErc20.sol";
 import "./../../common/Relayable.sol";
 import "openzeppelin-solidity/contracts/utils/ReentrancyGuard.sol";
-import "openzeppelin-solidity/contracts/Math/SafeMath.sol";
+import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 
 
