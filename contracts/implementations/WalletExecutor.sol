@@ -32,28 +32,21 @@ contract WalletExecutor {
         );
 
         // Retrieve inputs from data
-        bytes memory dependency;
         address to;
         uint256 value;
         uint256 maxGasLimit;
         uint256 maxGasPrice;
-        uint256 expiration;
-
         (
-            dependency,
             to,
             value,
             data,
             maxGasLimit,
-            maxGasPrice,
-            expiration
+            maxGasPrice
         ) = abi.decode(
             data, (
-                bytes,
                 address,
                 uint256,
                 bytes,
-                uint256,
                 uint256,
                 uint256
             )
@@ -61,9 +54,7 @@ contract WalletExecutor {
 
         // Validate Intent not expired, gas price and dependencies
         // solhint-disable-next-line not-rely-on-time
-        require(now < expiration, "Intent is expired");
         require(tx.gasprice < maxGasPrice, "Gas price too high");
-        require(_checkDependency(dependency), "Dependency is not satisfied");
 
         // Perform the Intent call
         // Send max gas limit or maximum possible gas limit
@@ -86,31 +77,4 @@ contract WalletExecutor {
         );
     }
 
-    /// @notice The dependency is a 'staticcall' to a 'target'
-    ///         when the call succeeds and it does not return false, the dependency is satisfied.
-    /// @dev [160 bits (target) + n bits (data)]
-    function _checkDependency(bytes memory _dependency) internal view returns (bool) {
-        if (_dependency.length == 0) {
-            return true;
-        } 
-
-        bool result;
-        // solhint-disable-next-line no-inline-assembly
-        assembly {
-            let response := mload(0x40)
-            let success := staticcall(
-                gas,
-                mload(add(_dependency, 20)),
-                add(52, _dependency),
-                sub(mload(_dependency), 20),
-                response,
-                32
-            )
-
-            result := and(gt(success, 0), gt(mload(response), 0))
-        }
-
-        return result;
-        
-    }
 }
