@@ -22,7 +22,7 @@ contract CompoundBridge is Collector, ReentrancyGuard {
         address _tokenAddress,
         address _cTokenAddress,
         address _collector
-    ) Collector(_collector) public {
+    ) public Collector(_collector) {
         cToken = ICErc20(_cTokenAddress);
         token = IERC20(_tokenAddress);
         require(cToken.isCToken());
@@ -35,7 +35,7 @@ contract CompoundBridge is Collector, ReentrancyGuard {
         uint256 _value,
         uint256 _fee,
         bytes calldata _signature
-    ) nonReentrant external {
+    ) external nonReentrant {
         Wallet wallet = Wallet(msg.sender);
         bytes32 hash = keccak256(
             abi.encodePacked(
@@ -64,7 +64,7 @@ contract CompoundBridge is Collector, ReentrancyGuard {
         uint256 _value,
         uint256 _fee,
         bytes calldata _signature
-    ) nonReentrant external {
+    ) external nonReentrant {
         Wallet wallet = Wallet(msg.sender);
         bytes32 hash = keccak256(
             abi.encodePacked(
