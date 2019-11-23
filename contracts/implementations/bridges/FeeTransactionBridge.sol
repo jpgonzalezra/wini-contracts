@@ -5,8 +5,9 @@ import "./../../common/Collector.sol";
 import "openzeppelin-solidity/contracts/utils/ReentrancyGuard.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 
-contract FeeTransactionManager is Collector, ReentrancyGuard {
 
+contract FeeTransactionBridge is Relayable, ReentrancyGuard {
+    
     IERC20 public token;
 
     constructor (address _tokenAddress, address _collector) Collector(_collector) public {
