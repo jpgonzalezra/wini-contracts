@@ -18,7 +18,7 @@ contract SaiToDaiBridge is Collector, ReentrancyGuard {
         address _saiAddress,
         address _migrationAddress,
         address _collector
-    ) public ollector(_collector) {
+    ) public Collector(_collector) {
         sai = IERC20(_saiAddress);
         migration = ScdMcdMigration(_migrationAddress);
         sai.approve(_migrationAddress, uint256(-1));
