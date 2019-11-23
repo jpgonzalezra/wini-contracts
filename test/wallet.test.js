@@ -21,18 +21,16 @@ function signHash (hash, privateKey) {
 }
 
 function encodeData (
-  dependencies,
   to,
   value,
   data,
   minGasLimit,
   maxGasPrice,
   salt,
-  expiration
 ) {
   return web3.eth.abi.encodeParameters(
-    ['bytes', 'address', 'uint256', 'bytes', 'uint256', 'uint256', 'uint256', 'bytes32'],
-    [dependencies, to, value, data, minGasLimit.toString(), maxGasPrice.toString(), expiration.toString(), salt]
+    ['address', 'uint256', 'bytes', 'uint256', 'uint256', 'bytes32'],
+    [to, value, data, minGasLimit.toString(), maxGasPrice.toString(), salt]
   );
 }
 
@@ -55,7 +53,6 @@ contract('Wini Wallet wallets', function (accounts) {
   const bob = accounts[1];
   const charly = accounts[2];
   const david = accounts[3];
-  const emily = accounts[4];
 
   const privateKeyAlice = '0x3132ce18b38230af1f8d751f5658c97e59d33a9e884676fddfc9cc4434cd36fb';
   const privateKeyBob = '0x087df46b73931fd31751e80a203bb6be011f3ab2cf1930b2a92db901f0fdffc6';
@@ -71,8 +68,8 @@ contract('Wini Wallet wallets', function (accounts) {
     const wallet = await Wallet.new();
     creator = await WalletProxyFactory.new(wallet.address);
     executor = await WalletExecutor.new();
-    testERC20 = await TestERC20.new();
     destruct = await TestSelfDestruct.new();
+    testERC20 = await TestERC20.new();
     testERC721 = await TestERC721.new();
   });
   describe('Create wini wallets', function () {
@@ -100,24 +97,20 @@ contract('Wini Wallet wallets', function (accounts) {
       const wallet = await Wallet.at(await creator.getWalletAddress(bob));
       await web3.eth.sendTransaction({ from: alice, to: wallet.address, value: 1 });
 
-      const dependencies = PREFIX;
-      const to = emily;
+      const to = david;
       const value = 1;
       const data = PREFIX;
       const minGasLimit = new BN(1000000);
       const maxGasPrice = new BN(10).pow(new BN(32));
       const salt = '0x11115';
-      const expiration = new BN(10).pow(new BN(24));
 
       const callData = encodeData(
-        dependencies,
         to,
         value,
         data,
         minGasLimit,
         maxGasPrice,
-        salt,
-        expiration
+        salt
       );
 
       const id = calcId(
@@ -126,7 +119,7 @@ contract('Wini Wallet wallets', function (accounts) {
         callData
       );
 
-      const prevBalanceReceiver = new BN(await web3.eth.getBalance(emily));
+      const prevBalanceReceiver = new BN(await web3.eth.getBalance(david));
       expect(new BN(await web3.eth.getBalance(wallet.address))).to.be.bignumber.equal(new BN(1));
 
       const signature = signHash(id, privateKeyAlice);
@@ -137,23 +130,21 @@ contract('Wini Wallet wallets', function (accounts) {
       );
 
       expect(new BN(await web3.eth.getBalance(wallet.address))).to.be.bignumber.equal(new BN(0));
-      expect(new BN(await web3.eth.getBalance(emily)).sub(prevBalanceReceiver)).to.be.bignumber.equal(new BN(1));
+      expect(new BN(await web3.eth.getBalance(david)).sub(prevBalanceReceiver)).to.be.bignumber.equal(new BN(1));
     });
     it('Should relay signed tx, send ETH, without salt', async function () {
       const wallet = await Wallet.at(await creator.getWalletAddress(bob));
       await web3.eth.sendTransaction({ from: alice, to: wallet.address, value: 1 });
 
-      const dependencies = PREFIX;
-      const to = emily;
+      const to = david;
       const value = 1;
       const data = PREFIX;
       const minGasLimit = 0;
       const maxGasPrice = new BN(10).pow(new BN(32));
-      const expiration = new BN(10).pow(new BN(24));
 
       const callData = web3.eth.abi.encodeParameters(
-        ['bytes', 'address', 'uint256', 'bytes', 'uint256', 'uint256', 'uint256'],
-        [dependencies, to, value, data, minGasLimit, maxGasPrice.toString(), expiration.toString()]
+        ['address', 'uint256', 'bytes', 'uint256', 'uint256'],
+        [to, value, data, minGasLimit, maxGasPrice.toString()]
       );
 
       const id = calcId(
@@ -162,7 +153,7 @@ contract('Wini Wallet wallets', function (accounts) {
         callData
       );
 
-      const prevBalanceReceiver = new BN(await web3.eth.getBalance(emily));
+      const prevBalanceReceiver = new BN(await web3.eth.getBalance(david));
       expect(new BN(await web3.eth.getBalance(wallet.address))).to.be.bignumber.equal(new BN(1));
 
       const signature = signHash(id, privateKeyAlice);
@@ -173,15 +164,14 @@ contract('Wini Wallet wallets', function (accounts) {
       );
 
       expect(new BN(await web3.eth.getBalance(wallet.address))).to.be.bignumber.equal(new BN(0));
-      expect(new BN(await web3.eth.getBalance(emily)).sub(prevBalanceReceiver))
+      expect(new BN(await web3.eth.getBalance(david)).sub(prevBalanceReceiver))
         .to.be.bignumber.equal(new BN(1));
     });
     it('Should relay signed tx, send tokens', async function () {
       const wallet = await Wallet.at(await creator.getWalletAddress(bob));
       await testERC20.setBalance(wallet.address, 10);
-      await testERC20.setBalance(emily, 0);
+      await testERC20.setBalance(david, 0);
 
-      const dependencies = PREFIX;
       const to = testERC20.address;
       const value = 0;
       const data = web3.eth.abi.encodeFunctionCall({
@@ -194,22 +184,18 @@ contract('Wini Wallet wallets', function (accounts) {
           type: 'uint256',
           name: 'value',
         }],
-      }, [emily, 4]);
+      }, [david, 4]);
 
       const minGasLimit = new BN(2000000);
       const maxGasPrice = new BN(10).pow(new BN(32));
       const salt = PREFIX;
-      const expiration = await time.latest() + 60;
-
       const callData = encodeData(
-        dependencies,
         to,
         value,
         data,
         minGasLimit,
         maxGasPrice,
-        salt,
-        expiration
+        salt
       );
 
       const id = calcId(
@@ -225,31 +211,27 @@ contract('Wini Wallet wallets', function (accounts) {
         signature
       );
 
-      expect(await testERC20.balanceOf(emily)).to.be.bignumber.equal(new BN(4));
+      expect(await testERC20.balanceOf(david)).to.be.bignumber.equal(new BN(4));
       expect(await testERC20.balanceOf(wallet.address)).to.be.bignumber.equal(new BN(6));
     });
     it('Should fail to relay if transaction is wronly signed', async function () {
       const wallet = await Wallet.at(await creator.getWalletAddress(bob));
       await web3.eth.sendTransaction({ from: alice, to: wallet.address, value: 1 });
 
-      const dependencies = PREFIX;
-      const to = emily;
+      const to = david;
       const value = 1;
       const data = PREFIX;
       const minGasLimit = 0;
       const maxGasPrice = new BN(10).pow(new BN(32));
       const salt = '0x1';
-      const expiration = new BN(10).pow(new BN(24));
 
       const callData = encodeData(
-        dependencies,
         to,
         value,
         data,
         minGasLimit,
         maxGasPrice,
-        salt,
-        expiration
+        salt
       );
 
       const id = calcId(
@@ -258,7 +240,7 @@ contract('Wini Wallet wallets', function (accounts) {
         callData
       );
 
-      const prevBalanceReceiver = new BN(await web3.eth.getBalance(emily));
+      const prevBalanceReceiver = new BN(await web3.eth.getBalance(david));
       expect(new BN(await web3.eth.getBalance(wallet.address))).to.be.bignumber.equal(new BN(1));
 
       const signature = signHash(id, privateKeyBob);
@@ -275,199 +257,25 @@ contract('Wini Wallet wallets', function (accounts) {
       ), 'Invalid signature');
 
       expect(new BN(await web3.eth.getBalance(wallet.address))).to.be.bignumber.equal(new BN(1));
-      expect(new BN(await web3.eth.getBalance(emily)).sub(prevBalanceReceiver))
-        .to.be.bignumber.equal(new BN(0));
-    });
-    it('Should relay is dependencies are filled', async function () {
-      const wallet = await Wallet.at(await creator.getWalletAddress(bob));
-      const firstDependencies = PREFIX;
-      const dependencyTo = emily;
-      const dependencyValue = 0;
-      const dependencyData = PREFIX;
-      const dependencyMinGasLimit = 0;
-      const dependencyMaxGasPrice = new BN(10).pow(new BN(32));
-      const dependencySalt = '0x1';
-      const dependencyExpiration = new BN(10).pow(new BN(24));
-
-      const dependencyCallData = encodeData(
-        firstDependencies,
-        dependencyTo,
-        dependencyValue,
-        dependencyData,
-        dependencyMinGasLimit,
-        dependencyMaxGasPrice,
-        dependencySalt,
-        dependencyExpiration
-      );
-
-      const dependencyId = calcId(
-        wallet.address,
-        executor.address,
-        dependencyCallData
-      );
-
-      await web3.eth.sendTransaction({ from: alice, to: wallet.address, value: 1 });
-
-      const dependencySignature = signHash(dependencyId, privateKeyAlice);
-      await wallet.relayIntent(
-        executor.address,
-        dependencyCallData,
-        dependencySignature
-      );
-
-      expect(await wallet.getIntentRelayer(dependencyId)).to.be.equal(alice);
-
-      const dependencies = ethereumUtil.bufferToHex(
-        Buffer.concat([
-          ethereumUtil.toBuffer(wallet.address),
-          ethereumUtil.toBuffer(
-            web3.eth.abi.encodeFunctionCall({
-              name: 'getIntentRelayer',
-              type: 'function',
-              inputs: [{
-                type: 'bytes32',
-                name: 'id',
-              }],
-            }, [dependencyId])
-          ),
-        ])
-      );
-
-      const to = david;
-      const value = 2;
-      const data = PREFIX;
-      const minGasLimit = 0;
-      const maxGasPrice = new BN(10).pow(new BN(32));
-      const salt = '0x2';
-      const expiration = await time.latest() + 60;
-
-      const calldata = encodeData(
-        dependencies,
-        to,
-        value,
-        data,
-        minGasLimit,
-        maxGasPrice,
-        salt,
-        expiration
-      );
-
-      const id = calcId(
-        wallet.address,
-        executor.address,
-        calldata
-      );
-
-      const prevBalanceReceiver = new BN(await web3.eth.getBalance(david));
-      expect(new BN(await web3.eth.getBalance(wallet.address))).to.be.bignumber.equal(new BN(2));
-
-      const signature = signHash(id, privateKeyAlice);
-      await wallet.relayIntent(
-        executor.address,
-        calldata,
-        signature
-      );
-
-      expect(new BN(await web3.eth.getBalance(wallet.address))).to.be.bignumber.equal(new BN(0));
       expect(new BN(await web3.eth.getBalance(david)).sub(prevBalanceReceiver))
-        .to.be.bignumber.equal(new BN(2));
-    });
-    it('Should fail to relay if dependencies are not filled', async function () {
-      const wallet = await Wallet.at(await creator.getWalletAddress(bob));
-      const firstDependencies = PREFIX;
-      const dependencyTo = emily;
-      const dependencyValue = 1;
-      const dependencyData = PREFIX;
-      const dependencyMinGasLimit = 0;
-      const dependencyMaxGasPrice = new BN(10).pow(new BN(32));
-      const dependencySalt = '0xaaaaaa12';
-      const dependencyExpiration = new BN(10).pow(new BN(24));
-
-      const dependencyCallData = encodeData(
-        firstDependencies,
-        dependencyTo,
-        dependencyValue,
-        dependencyData,
-        dependencyMinGasLimit,
-        dependencyMaxGasPrice,
-        dependencySalt,
-        dependencyExpiration
-      );
-
-      const dependencyId = calcId(
-        wallet.address,
-        executor.address,
-        dependencyCallData
-      );
-
-      const dependencies = ethereumUtil.bufferToHex(
-        Buffer.concat([
-          ethereumUtil.toBuffer(wallet.address),
-          ethereumUtil.toBuffer(
-            web3.eth.abi.encodeFunctionCall({
-              name: 'getIntentRelayer',
-              type: 'function',
-              inputs: [{
-                type: 'bytes32',
-                name: 'id',
-              }],
-            }, [dependencyId])
-          ),
-        ])
-      );
-
-      const to = emily;
-      const value = 1;
-      const data = PREFIX;
-      const minGasLimit = 0;
-      const maxGasPrice = new BN(10).pow(new BN(32));
-      const salt = '0x3';
-      const expiration = await time.latest() + 60;
-
-      const calldata = encodeData(
-        dependencies,
-        to,
-        value,
-        data,
-        minGasLimit,
-        maxGasPrice,
-        salt,
-        expiration
-      );
-
-      const id = calcId(
-        wallet.address,
-        executor.address,
-        calldata
-      );
-
-      const signature = signHash(id, privateKeyAlice);
-      await expectRevert(wallet.relayIntent(
-        executor.address,
-        calldata,
-        signature
-      ), 'Dependency is not satisfied');
+        .to.be.bignumber.equal(new BN(0));
     });
     it('Should fail to relay is intent is already relayed', async function () {
       const wallet = await Wallet.at(await creator.getWalletAddress(bob));
-      const dependencies = PREFIX;
-      const to = emily;
+      const to = david;
       const value = 0;
       const data = PREFIX;
       const minGasLimit = 0;
       const maxGasPrice = new BN(10).pow(new BN(32));
       const salt = '0x4';
-      const expiration = new BN(10).pow(new BN(24));
 
       const calldata = encodeData(
-        dependencies,
         to,
         value,
         data,
         minGasLimit,
         maxGasPrice,
         salt,
-        expiration
       );
 
       const id = calcId(
@@ -492,29 +300,25 @@ contract('Wini Wallet wallets', function (accounts) {
     });
     it('Should relay sending intent from signer (without signature)', async function () {
       const wallet = await Wallet.at(await creator.getWalletAddress(bob));
+      const preBalance = new BN(await web3.eth.getBalance(wallet.address));
       await web3.eth.sendTransaction({ from: alice, to: wallet.address, value: 1 });
 
-      const dependencies = PREFIX;
-      const to = emily;
+      const to = david;
       const value = 1;
       const data = PREFIX;
       const minGasLimit = 0;
       const maxGasPrice = new BN(10).pow(new BN(32));
       const salt = PREFIX;
-      const expiration = await time.latest() + 60;
-
-      const prevBalanceReceiver = new BN(await web3.eth.getBalance(emily));
-      expect(new BN(await web3.eth.getBalance(wallet.address))).to.be.bignumber.equal(new BN(1));
+      const prevBalanceReceiver = new BN(await web3.eth.getBalance(david));
+      expect(new BN(await web3.eth.getBalance(wallet.address))).to.be.bignumber.equal(preBalance.add(new BN(1)));
 
       const calldata = encodeData(
-        dependencies,
         to,
         value,
         data,
         minGasLimit,
         maxGasPrice,
-        salt,
-        expiration
+        salt
       );
 
       await wallet.relayIntent(
@@ -526,15 +330,14 @@ contract('Wini Wallet wallets', function (accounts) {
         }
       );
 
-      expect(new BN(await web3.eth.getBalance(wallet.address))).to.be.bignumber.equal(new BN(0));
-      expect(new BN(await web3.eth.getBalance(emily)).sub(prevBalanceReceiver)).to.be.bignumber.equal(new BN(1));
+      expect(new BN(await web3.eth.getBalance(wallet.address))).to.be.bignumber.equal(preBalance);
+      expect(new BN(await web3.eth.getBalance(david)).sub(prevBalanceReceiver)).to.be.bignumber.equal(new BN(1));
     });
     it('Should fail to realy with low gas limit', async function () {
       const wallet = await Wallet.at(await creator.getWalletAddress(bob));
       await testERC20.setBalance(wallet.address, 10);
-      await testERC20.setBalance(emily, 0);
+      await testERC20.setBalance(david, 0);
 
-      const dependencies = PREFIX;
       const to = testERC20.address;
       const value = 0;
       const data = web3.eth.abi.encodeFunctionCall({
@@ -547,22 +350,18 @@ contract('Wini Wallet wallets', function (accounts) {
           type: 'uint256',
           name: 'value',
         }],
-      }, [emily, 4]);
+      }, [david, 4]);
 
       const minGasLimit = new BN(7000000);
       const maxGasPrice = new BN(10).pow(new BN(32));
       const salt = '0x6';
-      const expiration = await time.latest() + 60;
-
       const calldata = encodeData(
-        dependencies,
         to,
         value,
         data,
         minGasLimit,
         maxGasPrice,
-        salt,
-        expiration
+        salt
       );
 
       const id = calcId(
@@ -581,15 +380,14 @@ contract('Wini Wallet wallets', function (accounts) {
         }
       ));
 
-      expect(await testERC20.balanceOf(emily)).to.be.bignumber.equal(new BN(0));
+      expect(await testERC20.balanceOf(david)).to.be.bignumber.equal(new BN(0));
       expect(await testERC20.balanceOf(wallet.address)).to.be.bignumber.equal(new BN(10));
     });
     it('Should fail to relay with high gas price', async function () {
       const wallet = await Wallet.at(await creator.getWalletAddress(bob));
       await testERC20.setBalance(wallet.address, 10);
-      await testERC20.setBalance(emily, 0);
+      await testERC20.setBalance(david, 0);
 
-      const dependencies = PREFIX;
       const to = testERC20.address;
       const value = 0;
       const data = web3.eth.abi.encodeFunctionCall({
@@ -602,22 +400,18 @@ contract('Wini Wallet wallets', function (accounts) {
           type: 'uint256',
           name: 'value',
         }],
-      }, [emily, 4]);
+      }, [david, 4]);
 
       const minGasLimit = new BN(1000000);
       const maxGasPrice = new BN(5);
       const salt = '0x6';
-      const expiration = await time.latest() + 60;
-
       const calldata = encodeData(
-        dependencies,
         to,
         value,
         data,
         minGasLimit,
         maxGasPrice,
-        salt,
-        expiration
+        salt
       );
 
       const id = calcId(
@@ -633,82 +427,25 @@ contract('Wini Wallet wallets', function (accounts) {
         signature
       ), 'Gas price too high');
 
-      expect(await testERC20.balanceOf(emily)).to.be.bignumber.equal(new BN(0));
-      expect(await testERC20.balanceOf(wallet.address)).to.be.bignumber.equal(new BN(10));
-    });
-    it('Should fail to relay if expired', async function () {
-      const wallet = await Wallet.at(await creator.getWalletAddress(bob));
-      await testERC20.setBalance(wallet.address, 10);
-      await testERC20.setBalance(emily, 0);
-
-      const dependencies = PREFIX;
-      const to = testERC20.address;
-      const value = 0;
-      const data = web3.eth.abi.encodeFunctionCall({
-        name: 'transfer',
-        type: 'function',
-        inputs: [{
-          type: 'address',
-          name: 'to',
-        }, {
-          type: 'uint256',
-          name: 'value',
-        }],
-      }, [emily, 4]);
-
-      const minGasLimit = new BN(1000000);
-      const maxGasPrice = new BN(10).pow(new BN(32));
-      const salt = '0x9';
-      const expiration = await time.latest() - 60;
-
-      const calldata = encodeData(
-        dependencies,
-        to,
-        value,
-        data,
-        minGasLimit,
-        maxGasPrice,
-        salt,
-        expiration
-      );
-
-      const id = calcId(
-        wallet.address,
-        executor.address,
-        calldata
-      );
-
-      const signature = signHash(id, privateKeyAlice);
-      await expectRevert(wallet.relayIntent(
-        executor.address,
-        calldata,
-        signature
-      ), 'Intent is expired');
-
-      expect(await testERC20.balanceOf(emily)).to.be.bignumber.equal(new BN(0));
+      expect(await testERC20.balanceOf(david)).to.be.bignumber.equal(new BN(0));
       expect(await testERC20.balanceOf(wallet.address)).to.be.bignumber.equal(new BN(10));
     });
     it('Should save relayed block number', async function () {
       const wallet = await Wallet.at(await creator.getWalletAddress(bob));
 
-      const dependencies = PREFIX;
       const to = wallet.address;
       const value = 0;
       const data = PREFIX;
       const minGasLimit = new BN(1000000);
       const maxGasPrice = new BN(10).pow(new BN(32));
       const salt = '0x10';
-      const expiration = await time.latest() + 180;
-
       const calldata = encodeData(
-        dependencies,
         to,
         value,
         data,
         minGasLimit,
         maxGasPrice,
-        salt,
-        expiration
+        salt
       );
 
       const id = calcId(
@@ -729,24 +466,19 @@ contract('Wini Wallet wallets', function (accounts) {
     it('Should save relayed by', async function () {
       const wallet = await Wallet.at(await creator.getWalletAddress(bob));
 
-      const dependencies = PREFIX;
       const to = wallet.address;
       const value = 0;
       const data = PREFIX;
       const minGasLimit = new BN(1000000);
       const maxGasPrice = new BN(10).pow(new BN(32));
       const salt = '0x11';
-      const expiration = await time.latest() + 180;
-
       const calldata = encodeData(
-        dependencies,
         to,
         value,
         data,
         minGasLimit,
         maxGasPrice,
-        salt,
-        expiration
+        salt
       );
 
       const id = calcId(
@@ -767,9 +499,8 @@ contract('Wini Wallet wallets', function (accounts) {
     it('Should not fail relay if call fails', async function () {
       const wallet = await Wallet.at(await creator.getWalletAddress(bob));
       await testERC20.setBalance(wallet.address, 10);
-      await testERC20.setBalance(emily, 0);
+      await testERC20.setBalance(david, 0);
 
-      const dependencies = PREFIX;
       const to = testERC20.address;
       const value = 0;
       const data = web3.eth.abi.encodeFunctionCall({
@@ -782,22 +513,18 @@ contract('Wini Wallet wallets', function (accounts) {
           type: 'uint256',
           name: 'value',
         }],
-      }, [emily, 11]);
+      }, [david, 11]);
 
       const minGasLimit = new BN(1000000);
       const maxGasPrice = new BN(10).pow(new BN(32));
       const salt = '0x12';
-      const expiration = await time.latest() + 240;
-
       const calldata = encodeData(
-        dependencies,
         to,
         value,
         data,
         minGasLimit,
         maxGasPrice,
-        salt,
-        expiration
+        salt
       );
 
       const id = calcId(
@@ -814,31 +541,26 @@ contract('Wini Wallet wallets', function (accounts) {
       );
 
       expect(await wallet.getIntentRelayer(id)).to.be.equal(alice);
-      expect(await testERC20.balanceOf(emily)).to.be.bignumber.equal(new BN(0));
+      expect(await testERC20.balanceOf(david)).to.be.bignumber.equal(new BN(0));
       expect(await testERC20.balanceOf(wallet.address)).to.be.bignumber.equal(new BN(10));
     });
     it('Should catch if call is out of gas', async function () {
       const testContract = await TestOutOfGasContract.new();
       const wallet = await Wallet.at(await creator.getWalletAddress(bob));
 
-      const dependencies = PREFIX;
       const to = testContract.address;
       const value = 0;
       const data = PREFIX;
       const minGasLimit = new BN(1000000);
       const maxGasPrice = new BN(10).pow(new BN(32));
       const salt = '0x12';
-      const expiration = await time.latest() + 240;
-
       const calldata = encodeData(
-        dependencies,
         to,
         value,
         data,
         minGasLimit,
         maxGasPrice,
-        salt,
-        expiration
+        salt
       );
 
       const id = calcId(
@@ -863,9 +585,8 @@ contract('Wini Wallet wallets', function (accounts) {
 
       // Create transfer intent
       await testERC20.setBalance(wallet.address, 10);
-      await testERC20.setBalance(emily, 0);
+      await testERC20.setBalance(david, 0);
 
-      const dependencies = PREFIX;
       const to = testERC20.address;
       const value = 0;
       const data = web3.eth.abi.encodeFunctionCall({
@@ -878,22 +599,19 @@ contract('Wini Wallet wallets', function (accounts) {
           type: 'uint256',
           name: 'value',
         }],
-      }, [emily, 3]);
+      }, [david, 3]);
 
       const minGasLimit = new BN(1000000);
       const maxGasPrice = new BN(10).pow(new BN(32));
       const salt = '0x13';
-      const expiration = await time.latest() + 86400;
 
       const calldata = encodeData(
-        dependencies,
         to,
         value,
         data,
         minGasLimit,
         maxGasPrice,
-        salt,
-        expiration
+        salt
       );
 
       const id = calcId(
@@ -904,8 +622,6 @@ contract('Wini Wallet wallets', function (accounts) {
 
       const signature = signHash(id, privateKeyAlice);
 
-      // Create cancel intent
-      const cancelDependencies = PREFIX;
       const cancelTo = wallet.address;
       const cancelValue = 0;
       const cancelData = web3.eth.abi.encodeFunctionCall({
@@ -920,17 +636,14 @@ contract('Wini Wallet wallets', function (accounts) {
       const cancelMinGasLimit = new BN(900000);
       const cancelMaxGasPrice = new BN(10).pow(new BN(32));
       const cancelSalt = '0x14';
-      const cancelExpiration = await time.latest() + 86400;
 
       const cancelCallData = encodeData(
-        cancelDependencies,
         cancelTo,
         cancelValue,
         cancelData,
         cancelMinGasLimit,
         cancelMaxGasPrice,
-        cancelSalt,
-        cancelExpiration
+        cancelSalt
       );
 
       const cancelId = calcId(
@@ -956,7 +669,7 @@ contract('Wini Wallet wallets', function (accounts) {
         signature
       ), 'Intent was canceled');
 
-      expect(await testERC20.balanceOf(emily)).to.be.bignumber.equal(new BN(0));
+      expect(await testERC20.balanceOf(david)).to.be.bignumber.equal(new BN(0));
       expect(await testERC20.balanceOf(wallet.address)).to.be.bignumber.equal(new BN(10));
     });
     it('Should fail to cancel intent from different wallet', async function () {
@@ -964,9 +677,8 @@ contract('Wini Wallet wallets', function (accounts) {
 
       // Create transfer intent
       await testERC20.setBalance(wallet.address, 10);
-      await testERC20.setBalance(emily, 0);
+      await testERC20.setBalance(david, 0);
 
-      const dependencies = PREFIX;
       const to = testERC20.address;
       const value = 0;
       const data = web3.eth.abi.encodeFunctionCall({
@@ -979,22 +691,19 @@ contract('Wini Wallet wallets', function (accounts) {
           type: 'uint256',
           name: 'value',
         }],
-      }, [emily, 3]);
+      }, [david, 3]);
 
       const minGasLimit = new BN(1000000);
       const maxGasPrice = new BN(10).pow(new BN(32));
       const salt = '0x14';
-      const expiration = await time.latest() + 86400;
 
       const calldata = encodeData(
-        dependencies,
         to,
         value,
         data,
         minGasLimit,
         maxGasPrice,
-        salt,
-        expiration
+        salt
       );
 
       const id = calcId(
@@ -1016,7 +725,7 @@ contract('Wini Wallet wallets', function (accounts) {
         signature
       );
 
-      expect(await testERC20.balanceOf(emily)).to.be.bignumber.equal(new BN(3));
+      expect(await testERC20.balanceOf(david)).to.be.bignumber.equal(new BN(3));
       expect(await testERC20.balanceOf(wallet.address)).to.be.bignumber.equal(new BN(7));
     });
     it('Should fail to cancel intent if already relayed', async function () {
@@ -1024,26 +733,22 @@ contract('Wini Wallet wallets', function (accounts) {
 
       // Create transfer intent
       await testERC20.setBalance(wallet.address, 10);
-      await testERC20.setBalance(emily, 0);
+      await testERC20.setBalance(david, 0);
 
-      const dependencies = PREFIX;
       const to = wallet.address;
       const value = 0;
       const data = PREFIX;
       const minGasLimit = new BN(1000000);
       const maxGasPrice = new BN(10).pow(new BN(32));
       const salt = '0x16';
-      const expiration = await time.latest() + 86400;
 
       const calldata = encodeData(
-        dependencies,
         to,
         value,
         data,
         minGasLimit,
         maxGasPrice,
-        salt,
-        expiration
+        salt
       );
 
       const id = calcId(
@@ -1062,7 +767,6 @@ contract('Wini Wallet wallets', function (accounts) {
       );
 
       // Create cancel intent
-      const cancelDependencies = PREFIX;
       const cancelTo = wallet.address;
       const cancelValue = 0;
       const cancelData = web3.eth.abi.encodeFunctionCall({
@@ -1077,17 +781,14 @@ contract('Wini Wallet wallets', function (accounts) {
       const cancelMinGasLimit = new BN(0);
       const cancelMaxGasPrice = new BN(10).pow(new BN(32));
       const cancelSalt = '0x17';
-      const cancelExpiration = await time.latest() + 86400;
 
       const cancelCallData = encodeData(
-        cancelDependencies,
         cancelTo,
         cancelValue,
         cancelData,
         cancelMinGasLimit,
         cancelMaxGasPrice,
-        cancelSalt,
-        cancelExpiration
+        cancelSalt
       );
 
       const cancelId = calcId(
@@ -1123,26 +824,22 @@ contract('Wini Wallet wallets', function (accounts) {
 
       // Create transfer intent
       await testERC20.setBalance(wallet.address, 10);
-      await testERC20.setBalance(emily, 0);
+      await testERC20.setBalance(david, 0);
 
-      const dependencies = PREFIX;
       const to = wallet.address;
       const value = 0;
       const data = PREFIX;
       const minGasLimit = new BN(1000000);
       const maxGasPrice = new BN(10).pow(new BN(32));
       const salt = '0x19';
-      const expiration = await time.latest() + 86400;
 
       const calldata = encodeData(
-        dependencies,
         to,
         value,
         data,
         minGasLimit,
         maxGasPrice,
-        salt,
-        expiration
+        salt
       );
 
       const id = calcId(
@@ -1152,7 +849,6 @@ contract('Wini Wallet wallets', function (accounts) {
       );
 
       // Create cancel intent
-      const cancelDependencies = PREFIX;
       const cancelTo = wallet.address;
       const cancelValue = 0;
       const cancelData = web3.eth.abi.encodeFunctionCall({
@@ -1167,17 +863,14 @@ contract('Wini Wallet wallets', function (accounts) {
       const cancelMinGasLimit = new BN(90000);
       const cancelMaxGasPrice = new BN(10).pow(new BN(32));
       const cancelSalt = '0x17';
-      const cancelExpiration = await time.latest() + 86400;
 
       const cancelCallData = encodeData(
-        cancelDependencies,
         cancelTo,
         cancelValue,
         cancelData,
         cancelMinGasLimit,
         cancelMaxGasPrice,
-        cancelSalt,
-        cancelExpiration
+        cancelSalt
       );
 
       const cancelId = calcId(
@@ -1186,7 +879,6 @@ contract('Wini Wallet wallets', function (accounts) {
         cancelCallData
       );
 
-      const cancelPrevDependencies = PREFIX;
       const cancelPrevto = wallet.address;
       const cancelPrevValue = 0;
       const cancelPrevData = web3.eth.abi.encodeFunctionCall({
@@ -1204,7 +896,6 @@ contract('Wini Wallet wallets', function (accounts) {
       const cancelPrevExpiration = await time.latest() + 86400;
 
       const cancelPrevCallData = encodeData(
-        cancelPrevDependencies,
         cancelPrevto,
         cancelPrevValue,
         cancelPrevData,
@@ -1265,7 +956,7 @@ contract('Wini Wallet wallets', function (accounts) {
       const transferUtil = await TestTransfer.new();
 
       const randomWallet = await creator.getWalletAddress(transferUtil.address);
-      await transferUtil.transfer(randomWallet, { from: emily, value: 100 });
+      await transferUtil.transfer(randomWallet, { from: david, value: 100 });
 
       const balance = new BN(await web3.eth.getBalance(randomWallet));
       expect(balance).to.be.bignumber.equal(new BN(100));
@@ -1290,7 +981,6 @@ contract('Wini Wallet wallets', function (accounts) {
 
       // Set balance and transfer
       await testERC20.setBalance(wallet.address, 10);
-      const dependencies = PREFIX;
       const to = testERC20.address;
       const value = 0;
       const data = web3.eth.abi.encodeFunctionCall({
@@ -1303,22 +993,19 @@ contract('Wini Wallet wallets', function (accounts) {
           type: 'uint256',
           name: 'value',
         }],
-      }, [emily, 2]);
+      }, [david, 2]);
 
       const minGasLimit = new BN(2000000);
       const maxGasPrice = new BN(10).pow(new BN(32));
-      const expiration = await time.latest() + 60;
       let salt = PREFIX;
 
       let callData = encodeData(
-        dependencies,
         to,
         value,
         data,
         minGasLimit,
         maxGasPrice,
-        salt,
-        expiration
+        salt
       );
 
       let id = calcId(
@@ -1356,14 +1043,12 @@ contract('Wini Wallet wallets', function (accounts) {
       // should fail to send tokens
       salt = '0x01';
       callData = encodeData(
-        dependencies,
         to,
         value,
         data,
         minGasLimit,
         maxGasPrice,
-        salt,
-        expiration
+        salt
       );
 
       id = calcId(
