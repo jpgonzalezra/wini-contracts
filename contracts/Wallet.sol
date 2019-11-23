@@ -22,12 +22,15 @@ contract Wallet {
     // [1 bit (canceled) 95 bits (block) 160 bits (relayer)]
     mapping(bytes32 => bytes32) private intentReceipt;
 
+    // Equals to `bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"))`
+    bytes4 private constant _ERC721_RECEIVED = 0x150b7a02;
+
     function() external payable {
         emit Fallback(msg.sender, msg.value);
     }
 
     /// @notice initialize wallet, any address can Init
-    /// @param _signer the signer address 
+    /// @param _signer the signer address
     /// @dev it must be called using another contract
     function init(address _signer) external payable {
         address existentSigner;
@@ -46,12 +49,12 @@ contract Wallet {
         bytes32 signerSlot = SIGNER_SLOT;
         // solhint-disable-next-line no-inline-assembly
         assembly { _signer := sload(signerSlot) }
-    } 
+    }
 
     /// @notice Address that relayed the `_id` intent
     /// @param _id intent id
     /// @dev address(0) if the intent was not relayed
-    /// @return relayer address 
+    /// @return relayer address
     function getIntentRelayer(bytes32 _id) external view returns (address _relayer) {
         (, , _relayer) = _decodeReceipt(intentReceipt[_id]);
     }
@@ -70,7 +73,7 @@ contract Wallet {
         (_canceled, , ) = _decodeReceipt(intentReceipt[_id]);
     }
 
-    /// @notice Relay a signed intent 
+    /// @notice Relay a signed intent
     /// @param _executor implementation to be execute
     /// @param _data data to be execute
     /// @param _signature signature of data signed by signer
@@ -171,7 +174,7 @@ contract Wallet {
             _receipt := or(shl(255, _canceled), or(shl(160, _block), _relayer))
         }
     }
-    
+
     /// @notice Decodes an Intent receipt
     /// @param _receipt decode an intent receipt
     /// @dev reverse of _encodeReceipt(bool,uint256,address)
@@ -190,7 +193,7 @@ contract Wallet {
 
     /// @dev Used to receive ERC721 tokens
     function onERC721Received(address, address, uint256, bytes calldata) external pure returns (bytes4) {
-        return bytes4(0x150b7a02);
+        return _ERC721_RECEIVED;
     }
 
 }
