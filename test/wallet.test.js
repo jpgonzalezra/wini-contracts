@@ -1264,9 +1264,7 @@ contract('Wini Wallet wallets', function (accounts) {
     it('Should receive ETH using transfer', async function () {
       const transferUtil = await TestTransfer.new();
 
-      await creator.createWallet(transferUtil.address);
       const randomWallet = await creator.getWalletAddress(transferUtil.address);
-
       await transferUtil.transfer(randomWallet, { from: emily, value: 100 });
 
       const balance = new BN(await web3.eth.getBalance(randomWallet));

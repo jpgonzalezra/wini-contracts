@@ -1,5 +1,6 @@
 pragma solidity 0.5.10;
 
+import "./Wallet.sol";
 import "./WalletProxy.sol";
 
 /// @title WalletProxyFactory
@@ -10,7 +11,7 @@ import "./WalletProxy.sol";
 /// @dev All wallets are proxies pointing to a single
 /// source contract, to make deployment costs viable
 contract WalletProxyFactory is WalletProxy {
-    
+
     // Random Invalid signer address, intents signed with this address are invalid
     address private constant INVALID_ADDRESS = address(0x00000000000000000000000000000FFFfffFFFFF);
 
@@ -35,7 +36,7 @@ contract WalletProxyFactory is WalletProxy {
 
         // apply keccak256 to initCode for get hash
         hash = keccak256(deploymentBytecode);
-        
+
         // Destroy the '_source' provided, if is not disabled
         Wallet wini = Wallet(_source);
         if (wini.signer() == address(0)) {
@@ -48,7 +49,7 @@ contract WalletProxyFactory is WalletProxy {
         // Save the _source address, casting to address (160 bits)
         walletImplementation = address(wini);
     }
-    
+
     /// @notice Calculates the wallet for a given signer
     /// @dev the wallet contract will be deployed in a deterministic manner
     /// @param _signer address to signer
@@ -82,11 +83,11 @@ contract WalletProxyFactory is WalletProxy {
             wallet := create2(
                 0, // amount ETH
                 add(proxyCode, 0x20),
-                mload(proxyCode), 
+                mload(proxyCode),
                 _signer // salt
             )
         }
-        
+
         // Init wallet with provided _signer
         // and forward all Ether
         wallet.init.value(msg.value)(_signer);
