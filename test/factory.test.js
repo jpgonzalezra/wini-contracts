@@ -26,7 +26,6 @@ contract('WalletProxyFactory contract', () => {
 
   const alice = wallets[0].getAddressString();
   const bob = wallets[1].getAddressString();
-
   let deploymentBytecode;
 
   before(async function () {

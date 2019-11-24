@@ -28,7 +28,7 @@ contract FeeTransactionBridge is ReceiptERC20Fee, ReentrancyGuard {
                 _fee
             )
         );
-        require(wallet.signer() == ECDSA.recover(hash, _signature), "FeeTransactionBridge/invalid-signature"); // Is this necessary?
+        require(wallet.signer() == ECDSA.recover(hash, _signature), "FeeTransactionBridge/invalid-signature"); //TODO: Is this necessary?
         require(token.transferFrom(msg.sender, _to, _value));
         transferFee(_fee);
     }

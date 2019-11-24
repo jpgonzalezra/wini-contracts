@@ -1,28 +1,45 @@
-const { BN, expectRevert, time } = require('openzeppelin-test-helpers');
+const { BN, expectRevert, time, ADDRESSZERO } = require('openzeppelin-test-helpers');
 const { expect } = require('chai');
 const { encodeData, getId, signHash } = require('./helpers/utils');
 
 const Wallet = artifacts.require('./Wallet.sol');
+const EthereumWallet = require('ethereumjs-wallet');
 const WalletExecutor = artifacts.require('./WalletExecutor.sol');
 const WalletProxyFactory = artifacts.require('./WalletProxyFactory.sol');
+const FeeTransactionBridge = artifacts.require('./FeeTransactionBridge.sol');
 const TestERC20 = artifacts.require('./TestERC20.sol');
 const TestERC721 = artifacts.require('./TestERC721.sol');
 const TestOutOfGasContract = artifacts.require('./TestOutOfGasContract.sol');
 const TestTransfer = artifacts.require('./TestTransfer.sol');
 const TestSelfDestruct = artifacts.require('./TestSelfDestruct.sol');
+const ethUtils = require('ethereumjs-util');
+
+const privateKeys = [
+  ethUtils.toBuffer('0xced26e4f0ad256777efa4b205ac3003eca7e1befb9f657be58600b7115a6cdf1'),
+  ethUtils.toBuffer('0x3132ce18b38230af1f8d751f5658c97e59d33a9e884676fddfc9cc4434cd36fb'),
+  ethUtils.toBuffer('0x087df46b73931fd31751e80a203bb6be011f3ab2cf1930b2a92db901f0fdffc6'),
+  ethUtils.toBuffer('0xeb558208fc7e52bc018d11414e6e624d0ab44a7cb63dfad9d75f913b45268746'),
+];
 
 contract('Wini Wallet wallets', function (accounts) {
   const PREFIX = '0x';
-  const alice = accounts[0];
-  const bob = accounts[1];
-  const charly = accounts[2];
-  const david = accounts[3];
+  const alice = EthereumWallet.fromPrivateKey(privateKeys[0]).getChecksumAddressString();
+  const bob = EthereumWallet.fromPrivateKey(privateKeys[1]).getChecksumAddressString();
+  const charly = EthereumWallet.fromPrivateKey(privateKeys[2]).getChecksumAddressString();
+  const david = EthereumWallet.fromPrivateKey(privateKeys[3]).getChecksumAddressString();
+  const collector = accounts[9];
 
-  const privateKeyAlice = '0x3132ce18b38230af1f8d751f5658c97e59d33a9e884676fddfc9cc4434cd36fb';
-  const privateKeyBob = '0x087df46b73931fd31751e80a203bb6be011f3ab2cf1930b2a92db901f0fdffc6';
+  console.log('Alice: ', alice);
+  console.log('Bob: ', bob);
+  console.log('Charly: ', charly);
+  console.log('David: ', david);
+
+  const privateKeyBob = privateKeys[1];
+  const privateKeyCharly = privateKeys[2];
 
   let creator;
   let executor;
+  let feeTransactionBridge;
   let destruct;
   let testERC20;
   let testERC721;
@@ -35,6 +52,7 @@ contract('Wini Wallet wallets', function (accounts) {
     destruct = await TestSelfDestruct.new();
     testERC20 = await TestERC20.new();
     testERC721 = await TestERC721.new();
+    feeTransactionBridge = await FeeTransactionBridge.new(testERC20.address, collector);
   });
   describe('Create wini wallets', function () {
     it('Should create wini wallet', async function () {
@@ -86,11 +104,11 @@ contract('Wini Wallet wallets', function (accounts) {
       const prevBalanceReceiver = new BN(await web3.eth.getBalance(david));
       expect(new BN(await web3.eth.getBalance(wallet.address))).to.be.bignumber.equal(new BN(1));
 
-      const signature = signHash(id, privateKeyAlice);
+      const signature = signHash(id, privateKeyBob);
       await wallet.relayIntent(
         executor.address,
         callData,
-        signature
+        signature,
       );
 
       expect(new BN(await web3.eth.getBalance(wallet.address))).to.be.bignumber.equal(new BN(0));
@@ -98,6 +116,7 @@ contract('Wini Wallet wallets', function (accounts) {
     });
     it('Should relay signed tx, send ETH, without salt', async function () {
       const wallet = await Wallet.at(await creator.getWalletAddress(bob));
+      const prevBalanceWalletReceiver = new BN(await web3.eth.getBalance(wallet.address));
       await web3.eth.sendTransaction({ from: alice, to: wallet.address, value: 1 });
 
       const to = david;
@@ -118,16 +137,16 @@ contract('Wini Wallet wallets', function (accounts) {
       );
 
       const prevBalanceReceiver = new BN(await web3.eth.getBalance(david));
-      expect(new BN(await web3.eth.getBalance(wallet.address))).to.be.bignumber.equal(new BN(1));
+      expect(new BN(await web3.eth.getBalance(wallet.address))).to.be.bignumber.equal(prevBalanceWalletReceiver.add(new BN(1)));
 
-      const signature = signHash(id, privateKeyAlice);
+      const signature = signHash(id, privateKeyBob);
       await wallet.relayIntent(
         executor.address,
         callData,
         signature
       );
 
-      expect(new BN(await web3.eth.getBalance(wallet.address))).to.be.bignumber.equal(new BN(0));
+      expect(new BN(await web3.eth.getBalance(wallet.address))).to.be.bignumber.equal(prevBalanceWalletReceiver);
       expect(new BN(await web3.eth.getBalance(david)).sub(prevBalanceReceiver))
         .to.be.bignumber.equal(new BN(1));
     });
@@ -168,7 +187,7 @@ contract('Wini Wallet wallets', function (accounts) {
         callData
       );
 
-      const signature = signHash(id, privateKeyAlice);
+      const signature = signHash(id, privateKeyBob);
       await wallet.relayIntent(
         executor.address,
         callData,
@@ -205,9 +224,7 @@ contract('Wini Wallet wallets', function (accounts) {
       );
 
       const prevBalanceReceiver = new BN(await web3.eth.getBalance(david));
-      expect(new BN(await web3.eth.getBalance(wallet.address))).to.be.bignumber.equal(new BN(1));
-
-      const signature = signHash(id, privateKeyBob);
+      const signature = signHash(id, privateKeyCharly);
       await expectRevert(wallet.relayIntent(
         executor.address,
         callData,
@@ -248,7 +265,7 @@ contract('Wini Wallet wallets', function (accounts) {
         calldata
       );
 
-      const signature = signHash(id, privateKeyAlice);
+      const signature = signHash(id, privateKeyBob);
 
       await wallet.relayIntent(
         executor.address,
@@ -264,8 +281,8 @@ contract('Wini Wallet wallets', function (accounts) {
     });
     it('Should relay sending intent from signer (without signature)', async function () {
       const wallet = await Wallet.at(await creator.getWalletAddress(bob));
-      const preBalance = new BN(await web3.eth.getBalance(wallet.address));
       await web3.eth.sendTransaction({ from: alice, to: wallet.address, value: 1 });
+      const preBalance = new BN(await web3.eth.getBalance(wallet.address));
 
       const to = david;
       const value = 1;
@@ -274,7 +291,6 @@ contract('Wini Wallet wallets', function (accounts) {
       const maxGasPrice = new BN(10).pow(new BN(32));
       const salt = PREFIX;
       const prevBalanceReceiver = new BN(await web3.eth.getBalance(david));
-      expect(new BN(await web3.eth.getBalance(wallet.address))).to.be.bignumber.equal(preBalance.add(new BN(1)));
 
       const calldata = encodeData(
         to,
@@ -294,8 +310,8 @@ contract('Wini Wallet wallets', function (accounts) {
         }
       );
 
-      expect(new BN(await web3.eth.getBalance(wallet.address))).to.be.bignumber.equal(preBalance);
-      expect(new BN(await web3.eth.getBalance(david)).sub(prevBalanceReceiver)).to.be.bignumber.equal(new BN(1));
+      expect(new BN(await web3.eth.getBalance(wallet.address))).to.be.bignumber.equal(preBalance.sub(new BN(value)));
+      expect(new BN(await web3.eth.getBalance(david)).sub(prevBalanceReceiver)).to.be.bignumber.equal(new BN(value));
     });
     it('Should fail to realy with low gas limit', async function () {
       const wallet = await Wallet.at(await creator.getWalletAddress(bob));
@@ -334,7 +350,7 @@ contract('Wini Wallet wallets', function (accounts) {
         calldata
       );
 
-      const signature = signHash(id, privateKeyAlice);
+      const signature = signHash(id, privateKeyBob);
       await expectRevert.unspecified(wallet.relayIntent(
         executor.address,
         calldata,
@@ -384,7 +400,7 @@ contract('Wini Wallet wallets', function (accounts) {
         calldata
       );
 
-      const signature = signHash(id, privateKeyAlice);
+      const signature = signHash(id, privateKeyBob);
       await expectRevert(wallet.relayIntent(
         executor.address,
         calldata,
@@ -418,7 +434,7 @@ contract('Wini Wallet wallets', function (accounts) {
         calldata
       );
 
-      const signature = signHash(id, privateKeyAlice);
+      const signature = signHash(id, privateKeyBob);
       await wallet.relayIntent(
         executor.address,
         calldata,
@@ -451,7 +467,7 @@ contract('Wini Wallet wallets', function (accounts) {
         calldata
       );
 
-      const signature = signHash(id, privateKeyAlice);
+      const signature = signHash(id, privateKeyBob);
       await wallet.relayIntent(
         executor.address,
         calldata,
@@ -497,7 +513,7 @@ contract('Wini Wallet wallets', function (accounts) {
         calldata
       );
 
-      const signature = signHash(id, privateKeyAlice);
+      const signature = signHash(id, privateKeyBob);
       await wallet.relayIntent(
         executor.address,
         calldata,
@@ -533,7 +549,7 @@ contract('Wini Wallet wallets', function (accounts) {
         calldata
       );
 
-      const signature = signHash(id, privateKeyAlice);
+      const signature = signHash(id, privateKeyBob);
       await wallet.relayIntent(
         executor.address,
         calldata,
@@ -584,7 +600,7 @@ contract('Wini Wallet wallets', function (accounts) {
         calldata
       );
 
-      const signature = signHash(id, privateKeyAlice);
+      const signature = signHash(id, privateKeyBob);
 
       const cancelTo = wallet.address;
       const cancelValue = 0;
@@ -616,7 +632,7 @@ contract('Wini Wallet wallets', function (accounts) {
         cancelCallData
       );
 
-      const cancelSignature = signHash(cancelId, privateKeyAlice);
+      const cancelSignature = signHash(cancelId, privateKeyBob);
 
       await wallet.relayIntent(
         executor.address,
@@ -676,7 +692,7 @@ contract('Wini Wallet wallets', function (accounts) {
         calldata
       );
 
-      const signature = signHash(id, privateKeyAlice);
+      const signature = signHash(id, privateKeyBob);
 
       // Try to cancel intent
       await expectRevert(wallet.cancel(id), 'Only wallet can cancel txs');
@@ -721,7 +737,7 @@ contract('Wini Wallet wallets', function (accounts) {
         calldata
       );
 
-      const signature = signHash(id, privateKeyAlice);
+      const signature = signHash(id, privateKeyBob);
 
       // Relay intent
       await wallet.relayIntent(
@@ -761,7 +777,7 @@ contract('Wini Wallet wallets', function (accounts) {
         cancelCallData
       );
 
-      const cancelSignature = signHash(cancelId, privateKeyAlice);
+      const cancelSignature = signHash(cancelId, privateKeyBob);
 
       const cancelReceipt = await wallet.relayIntent(
         executor.address,
@@ -875,8 +891,8 @@ contract('Wini Wallet wallets', function (accounts) {
         cancelPrevCallData
       );
 
-      const cancelSignature = signHash(cancelId, privateKeyAlice);
-      const cancelSecondSignature = signHash(cancelPrevId, privateKeyAlice);
+      const cancelSignature = signHash(cancelId, privateKeyBob);
+      const cancelSecondSignature = signHash(cancelPrevId, privateKeyBob);
 
       const cancelFirstReceipt = await wallet.relayIntent(
         executor.address,
@@ -978,7 +994,7 @@ contract('Wini Wallet wallets', function (accounts) {
         callData
       );
 
-      let signature = signHash(id, privateKeyBob);
+      let signature = signHash(id, privateKeyCharly);
       await wallet.relayIntent(
         executor.address,
         callData,
@@ -1000,7 +1016,7 @@ contract('Wini Wallet wallets', function (accounts) {
       await wallet.relayIntent(
         destruct.address,
         '0x00',
-        signHash(id, privateKeyBob)
+        signHash(id, privateKeyCharly)
       );
 
       // Wini Wallet should be destroyed
@@ -1021,7 +1037,7 @@ contract('Wini Wallet wallets', function (accounts) {
         callData
       );
 
-      signature = signHash(id, privateKeyBob);
+      signature = signHash(id, privateKeyCharly);
       await wallet.relayIntent(
         executor.address,
         callData,
@@ -1051,6 +1067,74 @@ contract('Wini Wallet wallets', function (accounts) {
         ogsignature
       );
 
+      expect(await testERC20.balanceOf(wallet.address)).to.be.bignumber.equal(new BN(4));
+    });
+  });
+  describe('Bridges', function () {
+    it('should be charges the end user for gas costs', async function () {
+      const bobAddr = await creator.getWalletAddress(bob);
+      const wallet = await Wallet.at(bobAddr);
+
+      const sender = wallet.address;
+      await testERC20.setBalance(sender, 10);
+      await testERC20.setBalance(david, 0);
+
+      await testERC20.approve(feeTransactionBridge.address, -1, { from: sender });
+      const _value = 5;
+      const _fee = 2;
+      const hash = web3.utils.soliditySha3(
+        { t: 'address', v: sender },
+        { t: 'address', v: david },
+        { t: 'uint256', v: _value },
+        { t: 'uint256', v: _fee }
+      );
+
+      // FeeTransactionBridge -> execute(address _to, uint256 _value, uint256 _fee, bytes calldata _signature)
+      const data = web3.eth.abi.encodeFunctionCall({
+        name: 'execute',
+        type: 'function',
+        inputs: [{
+          type: 'address',
+          name: '_to',
+        }, {
+          type: 'uint256',
+          name: '_value',
+        }, {
+          type: 'uint256',
+          name: '_fee',
+        }, {
+          type: 'bytes',
+          name: '_signature',
+        }],
+      }, [david, _value, _fee, signHash(hash, privateKeyBob)]);
+
+      const minGasLimit = new BN(2000000);
+      const maxGasPrice = new BN(10).pow(new BN(32));
+      const salt = PREFIX;
+      const callData = encodeData(
+        feeTransactionBridge.address,
+        0, // value
+        data,
+        minGasLimit,
+        maxGasPrice,
+        salt
+      );
+
+      const id = getId(
+        wallet.address,
+        executor.address,
+        callData
+      );
+
+      const relaySignature = signHash(id, privateKeyBob);
+      await wallet.relayIntent(
+        executor.address,
+        callData,
+        relaySignature,
+      );
+
+      expect(await testERC20.balanceOf(david)).to.be.bignumber.equal(new BN(4));
+      expect(await testERC20.balanceOf(collector)).to.be.bignumber.equal(new BN(2));
       expect(await testERC20.balanceOf(wallet.address)).to.be.bignumber.equal(new BN(4));
     });
   });

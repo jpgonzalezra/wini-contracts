@@ -42,7 +42,7 @@ contract CompoundBridge is ReceiptERC20Fee, ReentrancyGuard {
                 _fee
             )
         );
-        require(wallet.signer() == ECDSA.recover(hash, _signature), "CompoundBridge/invalid-signature");
+        require(wallet.signer() == ECDSA.recover(hash, _signature), "CompoundBridge/invalid-signature"); // TODO: Is this necessary?
 
         transferFee(_fee);
         require(token.transferFrom(msg.sender, address(this), _value), "CompoundBridge/pull-token-failed");
@@ -71,7 +71,7 @@ contract CompoundBridge is ReceiptERC20Fee, ReentrancyGuard {
                 _fee
             )
         );
-        require(wallet.signer() == ECDSA.recover(hash, _signature), "CompoundBridge/invalid-signature");
+        require(wallet.signer() == ECDSA.recover(hash, _signature), "CompoundBridge/invalid-signature"); // TODO: Is this necessary?
 
         transferFee(_fee);
         require(cToken.transferFrom(msg.sender, address(this), _value), "CompoundBridge/pull-token-failed");
