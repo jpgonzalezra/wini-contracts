@@ -12,6 +12,9 @@ import "./WalletProxy.sol";
 /// source contract, to make deployment costs viable
 contract WalletProxyFactory is WalletProxy {
 
+    // emit event when creating the wallet with create2 opcode
+    event Deployed(address _walletAddress);
+
     // Random Invalid signer address, intents signed with this address are invalid
     address private constant INVALID_ADDRESS = address(0x00000000000000000000000000000FFFfffFFFFF);
 
@@ -91,5 +94,6 @@ contract WalletProxyFactory is WalletProxy {
         // Init wallet with provided _signer
         // and forward all Ether
         wallet.init.value(msg.value)(_signer);
+        emit Deployed(address(wallet));
     }
 }

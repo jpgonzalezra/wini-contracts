@@ -1,13 +1,11 @@
 {
   "name": "wini-contracts",
   "version": "1.0.0",
-  "description": "Ethereum meta transactions contract, inspired by marmo.",
+  "description": "Ethereum meta transactions or gassless transaction contracts, inspired by austintgriffith, marmo, uPort and others.",
   "license": "MIT",
   "files": [
     "/contracts/**/*.sol",
-    "/build/contracts/*.json",
-    "!/contracts/mocks",
-    "!/contracts/examples"
+    "/build/contracts/*.json"
   ],
   "scripts": {
     "console": "truffle console",
@@ -55,6 +53,7 @@
     "openzeppelin-test-helpers": "^0.4.2",
     "solc": "0.5.10",
     "husky": "^3.0.5",
-    "solidity-flattener": "github:poanetwork/solidity-flattener#master"
+    "solidity-flattener": "github:poanetwork/solidity-flattener#master",
+    "ethereumjs-wallet": "^0.6.3"
   }
 }

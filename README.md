@@ -22,3 +22,5 @@ Join our social media channels and become part of Wallet’s Community!
 * [EIP1-776](https://github.com/ethereum/EIPs/issues/1776)
 * [Marmo](https://github.com/ripio/marmo-contracts)
 * [Aragon](https://github.com/aragon/prototypes)
+* [austintgriffith](https://github.com/austintgriffith)
+* [OpenZeppelin](https://openzeppelin.com/contracts/)

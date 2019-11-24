@@ -1,6 +1,6 @@
 const { BN, expectRevert, time } = require('openzeppelin-test-helpers');
 const { expect } = require('chai');
-const ethereumUtil = require('ethereumjs-util');
+const { encodeData, getId, signHash } = require('./helpers/utils');
 
 const Wallet = artifacts.require('./Wallet.sol');
 const WalletExecutor = artifacts.require('./WalletExecutor.sol');
@@ -10,42 +10,6 @@ const TestERC721 = artifacts.require('./TestERC721.sol');
 const TestOutOfGasContract = artifacts.require('./TestOutOfGasContract.sol');
 const TestTransfer = artifacts.require('./TestTransfer.sol');
 const TestSelfDestruct = artifacts.require('./TestSelfDestruct.sol');
-
-function signHash (hash, privateKey) {
-  const signature = ethereumUtil.ecsign(
-    ethereumUtil.toBuffer(hash),
-    ethereumUtil.toBuffer(privateKey)
-  );
-
-  return ethereumUtil.bufferToHex(Buffer.concat([signature.r, signature.s, ethereumUtil.toBuffer(signature.v)]));
-}
-
-function encodeData (
-  to,
-  value,
-  data,
-  minGasLimit,
-  maxGasPrice,
-  salt,
-) {
-  return web3.eth.abi.encodeParameters(
-    ['address', 'uint256', 'bytes', 'uint256', 'uint256', 'bytes32'],
-    [to, value, data, minGasLimit.toString(), maxGasPrice.toString(), salt]
-  );
-}
-
-function calcId (wallet, implementation, data) {
-  return web3.utils.soliditySha3(
-    { t: 'address', v: wallet },
-    { t: 'address', v: implementation },
-    { t: 'bytes32',
-      v:
-        web3.utils.soliditySha3(
-          { t: 'bytes', v: data }
-        ),
-    }
-  );
-}
 
 contract('Wini Wallet wallets', function (accounts) {
   const PREFIX = '0x';
@@ -113,7 +77,7 @@ contract('Wini Wallet wallets', function (accounts) {
         salt
       );
 
-      const id = calcId(
+      const id = getId(
         wallet.address,
         executor.address,
         callData
@@ -147,7 +111,7 @@ contract('Wini Wallet wallets', function (accounts) {
         [to, value, data, minGasLimit, maxGasPrice.toString()]
       );
 
-      const id = calcId(
+      const id = getId(
         wallet.address,
         executor.address,
         callData
@@ -198,7 +162,7 @@ contract('Wini Wallet wallets', function (accounts) {
         salt
       );
 
-      const id = calcId(
+      const id = getId(
         wallet.address,
         executor.address,
         callData
@@ -234,7 +198,7 @@ contract('Wini Wallet wallets', function (accounts) {
         salt
       );
 
-      const id = calcId(
+      const id = getId(
         wallet.address,
         executor.address,
         callData
@@ -278,7 +242,7 @@ contract('Wini Wallet wallets', function (accounts) {
         salt,
       );
 
-      const id = calcId(
+      const id = getId(
         wallet.address,
         executor.address,
         calldata
@@ -364,7 +328,7 @@ contract('Wini Wallet wallets', function (accounts) {
         salt
       );
 
-      const id = calcId(
+      const id = getId(
         wallet.address,
         executor.address,
         calldata
@@ -414,7 +378,7 @@ contract('Wini Wallet wallets', function (accounts) {
         salt
       );
 
-      const id = calcId(
+      const id = getId(
         wallet.address,
         executor.address,
         calldata
@@ -448,7 +412,7 @@ contract('Wini Wallet wallets', function (accounts) {
         salt
       );
 
-      const id = calcId(
+      const id = getId(
         wallet.address,
         executor.address,
         calldata
@@ -481,7 +445,7 @@ contract('Wini Wallet wallets', function (accounts) {
         salt
       );
 
-      const id = calcId(
+      const id = getId(
         wallet.address,
         executor.address,
         calldata
@@ -527,7 +491,7 @@ contract('Wini Wallet wallets', function (accounts) {
         salt
       );
 
-      const id = calcId(
+      const id = getId(
         wallet.address,
         executor.address,
         calldata
@@ -563,7 +527,7 @@ contract('Wini Wallet wallets', function (accounts) {
         salt
       );
 
-      const id = calcId(
+      const id = getId(
         wallet.address,
         executor.address,
         calldata
@@ -614,7 +578,7 @@ contract('Wini Wallet wallets', function (accounts) {
         salt
       );
 
-      const id = calcId(
+      const id = getId(
         wallet.address,
         executor.address,
         calldata
@@ -646,7 +610,7 @@ contract('Wini Wallet wallets', function (accounts) {
         cancelSalt
       );
 
-      const cancelId = calcId(
+      const cancelId = getId(
         wallet.address,
         executor.address,
         cancelCallData
@@ -706,7 +670,7 @@ contract('Wini Wallet wallets', function (accounts) {
         salt
       );
 
-      const id = calcId(
+      const id = getId(
         wallet.address,
         executor.address,
         calldata
@@ -751,7 +715,7 @@ contract('Wini Wallet wallets', function (accounts) {
         salt
       );
 
-      const id = calcId(
+      const id = getId(
         wallet.address,
         executor.address,
         calldata
@@ -791,7 +755,7 @@ contract('Wini Wallet wallets', function (accounts) {
         cancelSalt
       );
 
-      const cancelId = calcId(
+      const cancelId = getId(
         wallet.address,
         executor.address,
         cancelCallData
@@ -842,7 +806,7 @@ contract('Wini Wallet wallets', function (accounts) {
         salt
       );
 
-      const id = calcId(
+      const id = getId(
         wallet.address,
         executor.address,
         calldata
@@ -873,7 +837,7 @@ contract('Wini Wallet wallets', function (accounts) {
         cancelSalt
       );
 
-      const cancelId = calcId(
+      const cancelId = getId(
         wallet.address,
         executor.address,
         cancelCallData
@@ -905,7 +869,7 @@ contract('Wini Wallet wallets', function (accounts) {
         cancelPrevExpiration
       );
 
-      const cancelPrevId = calcId(
+      const cancelPrevId = getId(
         wallet.address,
         executor.address,
         cancelPrevCallData
@@ -1008,7 +972,7 @@ contract('Wini Wallet wallets', function (accounts) {
         salt
       );
 
-      let id = calcId(
+      let id = getId(
         wallet.address,
         executor.address,
         callData
@@ -1027,7 +991,7 @@ contract('Wini Wallet wallets', function (accounts) {
       expect(await testERC20.balanceOf(wallet.address)).to.be.bignumber.equal(new BN(8));
 
       // Destroy wallet
-      id = calcId(
+      id = getId(
         wallet.address,
         destruct.address,
         '0x00'
@@ -1051,7 +1015,7 @@ contract('Wini Wallet wallets', function (accounts) {
         salt
       );
 
-      id = calcId(
+      id = getId(
         wallet.address,
         executor.address,
         callData

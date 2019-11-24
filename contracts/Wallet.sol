@@ -37,7 +37,7 @@ contract Wallet {
         bytes32 signerSlot = SIGNER_SLOT;
         // solhint-disable-next-line no-inline-assembly
         assembly { existentSigner := sload(signerSlot) }
-        require(existentSigner == address(0), "Signer already defined");
+        require(existentSigner == address(0), "Wallet already defined");
         // solhint-disable-next-line no-inline-assembly
         assembly { sstore(signerSlot, _signer) }
     }
