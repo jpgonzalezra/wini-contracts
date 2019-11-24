@@ -1,6 +1,6 @@
 const { BN, expectRevert, time } = require('openzeppelin-test-helpers');
 const { expect } = require('chai');
-const { encodeData, getId, signHash, accounts, privateKeys } = require('./helpers/utils');
+const { encodeData, getId, signHash, wallets } = require('./helpers/utils');
 
 const Wallet = artifacts.require('./Wallet.sol');
 const WalletExecutor = artifacts.require('./WalletExecutor.sol');
@@ -14,14 +14,14 @@ const TestSelfDestruct = artifacts.require('./TestSelfDestruct.sol');
 
 contract('Wini Wallet wallets', function () {
   const PREFIX = '0x';
-  const relayer = accounts[0];
-  const bob = accounts[1];
-  const charly = accounts[2];
-  const david = accounts[3];
-  const collector = accounts[4];
+  const relayer = wallets[0];
+  const bob = wallets[1];
+  const charly = wallets[2];
+  const david = wallets[3];
+  const collector = wallets[4];
 
-  const privateKeyBob = privateKeys[1];
-  const privateKeyCharly = privateKeys[2];
+  const privateKeyBob = '0x3132ce18b38230af1f8d751f5658c97e59d33a9e884676fddfc9cc4434cd36fb';
+  const privateKeyCharly = '0x087df46b73931fd31751e80a203bb6be011f3ab2cf1930b2a92db901f0fdffc6';
 
   let factory;
   let executor;
@@ -95,6 +95,7 @@ contract('Wini Wallet wallets', function () {
         executor.address,
         callData,
         signature,
+        { from: relayer }
       );
 
       expect(new BN(await web3.eth.getBalance(wallet.address))).to.be.bignumber.equal(new BN(0));
@@ -123,13 +124,15 @@ contract('Wini Wallet wallets', function () {
       );
 
       const prevBalanceReceiver = new BN(await web3.eth.getBalance(david));
-      expect(new BN(await web3.eth.getBalance(wallet.address))).to.be.bignumber.equal(prevBalanceWalletReceiver.add(new BN(1)));
+      expect(new BN(await web3.eth.getBalance(wallet.address)))
+        .to.be.bignumber.equal(prevBalanceWalletReceiver.add(new BN(1)));
 
       const signature = signHash(id, privateKeyBob);
       await wallet.relayIntent(
         executor.address,
         callData,
-        signature
+        signature,
+        { from: relayer }
       );
 
       expect(new BN(await web3.eth.getBalance(wallet.address))).to.be.bignumber.equal(prevBalanceWalletReceiver);
@@ -177,7 +180,8 @@ contract('Wini Wallet wallets', function () {
       await wallet.relayIntent(
         executor.address,
         callData,
-        signature
+        signature,
+        { from: relayer }
       );
 
       expect(await testERC20.balanceOf(david)).to.be.bignumber.equal(new BN(4));
@@ -256,13 +260,15 @@ contract('Wini Wallet wallets', function () {
       await wallet.relayIntent(
         executor.address,
         calldata,
-        signature
+        signature,
+        { from: relayer }
       );
 
       await expectRevert(wallet.relayIntent(
         executor.address,
         calldata,
-        signature
+        signature,
+        { from: relayer }
       ), 'Intent already relayed');
     });
     it('Should relay sending intent from signer (without signature)', async function () {
@@ -424,7 +430,8 @@ contract('Wini Wallet wallets', function () {
       await wallet.relayIntent(
         executor.address,
         calldata,
-        signature
+        signature,
+        { from: relayer }
       );
 
       expect(await wallet.getBlockOfIntentExecution(id)).to.be.bignumber.equal(new BN(await web3.eth.getBlockNumber()));
@@ -457,7 +464,7 @@ contract('Wini Wallet wallets', function () {
       await wallet.relayIntent(
         executor.address,
         calldata,
-        signature
+        signature, { from: relayer }
       );
 
       expect(await wallet.getIntentRelayer(id)).to.be.equal(relayer);
@@ -503,7 +510,8 @@ contract('Wini Wallet wallets', function () {
       await wallet.relayIntent(
         executor.address,
         calldata,
-        signature
+        signature,
+        { from: relayer }
       );
 
       expect(await wallet.getIntentRelayer(id)).to.be.equal(relayer);
@@ -539,7 +547,8 @@ contract('Wini Wallet wallets', function () {
       await wallet.relayIntent(
         executor.address,
         calldata,
-        signature
+        signature,
+        { from: relayer }
       );
 
       expect(await wallet.getIntentRelayer(id)).to.be.equal(relayer);
@@ -623,7 +632,8 @@ contract('Wini Wallet wallets', function () {
       await wallet.relayIntent(
         executor.address,
         cancelCallData,
-        cancelSignature
+        cancelSignature,
+        { from: relayer }
       );
 
       expect(await wallet.isIntentCanceled(id)).to.be.equal(true);
@@ -688,7 +698,8 @@ contract('Wini Wallet wallets', function () {
       await wallet.relayIntent(
         executor.address,
         calldata,
-        signature
+        signature,
+        { from: relayer }
       );
 
       expect(await testERC20.balanceOf(david)).to.be.bignumber.equal(new BN(3));
@@ -729,7 +740,8 @@ contract('Wini Wallet wallets', function () {
       await wallet.relayIntent(
         executor.address,
         calldata,
-        signature
+        signature,
+        { from: relayer }
       );
 
       // Create cancel intent
@@ -768,7 +780,8 @@ contract('Wini Wallet wallets', function () {
       const cancelReceipt = await wallet.relayIntent(
         executor.address,
         cancelCallData,
-        cancelSignature
+        cancelSignature,
+        { from: relayer }
       );
 
       expect(await wallet.isIntentCanceled(id)).to.be.equal(false);
@@ -883,13 +896,15 @@ contract('Wini Wallet wallets', function () {
       const cancelFirstReceipt = await wallet.relayIntent(
         executor.address,
         cancelCallData,
-        cancelSignature
+        cancelSignature,
+        { from: relayer }
       );
 
       const cancelSecondReceipt = await wallet.relayIntent(
         executor.address,
         cancelPrevCallData,
-        cancelSecondSignature
+        cancelSecondSignature,
+        { from: relayer }
       );
 
       expect(await wallet.isIntentCanceled(id)).to.be.equal(true);
@@ -984,7 +999,8 @@ contract('Wini Wallet wallets', function () {
       await wallet.relayIntent(
         executor.address,
         callData,
-        signature
+        signature,
+        { from: relayer }
       );
 
       const ogcalldata = callData;
@@ -1002,7 +1018,8 @@ contract('Wini Wallet wallets', function () {
       await wallet.relayIntent(
         destruct.address,
         '0x00',
-        signHash(id, privateKeyCharly)
+        signHash(id, privateKeyCharly),
+        { from: relayer }
       );
 
       // Wini Wallet should be destroyed
@@ -1027,7 +1044,8 @@ contract('Wini Wallet wallets', function () {
       await wallet.relayIntent(
         executor.address,
         callData,
-        signature
+        signature,
+        { from: relayer }
       );
 
       // token count remains the same
@@ -1040,7 +1058,8 @@ contract('Wini Wallet wallets', function () {
       await wallet.relayIntent(
         executor.address,
         callData,
-        signature
+        signature,
+        { from: relayer }
       );
 
       expect(await testERC20.balanceOf(wallet.address)).to.be.bignumber.equal(new BN(6));
@@ -1050,7 +1069,8 @@ contract('Wini Wallet wallets', function () {
       await wallet.relayIntent(
         executor.address,
         ogcalldata,
-        ogsignature
+        ogsignature,
+        { from: relayer }
       );
 
       expect(await testERC20.balanceOf(wallet.address)).to.be.bignumber.equal(new BN(4));
@@ -1065,9 +1085,8 @@ contract('Wini Wallet wallets', function () {
       await testERC20.setBalance(sender, 10);
       await testERC20.setBalance(david, 0);
 
-      await testERC20.approve(feeTransactionBridge.address, -1, { from: sender });
-      const _value = 5;
-      const _fee = 2;
+      const _value = 0;
+      const _fee = 0;
       const hash = web3.utils.soliditySha3(
         { t: 'address', v: sender },
         { t: 'address', v: david },
@@ -1117,11 +1136,7 @@ contract('Wini Wallet wallets', function () {
         executor.address,
         callData,
         relaySignature,
-      );
-
-      expect(await testERC20.balanceOf(david)).to.be.bignumber.equal(new BN(4));
-      expect(await testERC20.balanceOf(collector)).to.be.bignumber.equal(new BN(2));
-      expect(await testERC20.balanceOf(wallet.address)).to.be.bignumber.equal(new BN(4));
+        { from: relayer });
     });
   });
 });

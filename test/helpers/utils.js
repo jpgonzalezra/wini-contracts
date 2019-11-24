@@ -6,10 +6,10 @@ const privateKeys = [
   ethereumUtil.toBuffer('0x3132ce18b38230af1f8d751f5658c97e59d33a9e884676fddfc9cc4434cd36fb'),
   ethereumUtil.toBuffer('0x087df46b73931fd31751e80a203bb6be011f3ab2cf1930b2a92db901f0fdffc6'),
   ethereumUtil.toBuffer('0xeb558208fc7e52bc018d11414e6e624d0ab44a7cb63dfad9d75f913b45268746'),
-  ethereumUtil.toBuffer('0x5261e2a3b298bbe422f478e7358e16e9c58520ca776eaad9ed71aeebb292b081'),
+  ethereumUtil.toBuffer('0xde43de7119a20ee767b39b926058096f95812058ed1c078f35269b5c788a33cf'),
 ];
 
-const accounts = [
+const wallets = [
   Wallet.fromPrivateKey(privateKeys[0]).getChecksumAddressString(),
   Wallet.fromPrivateKey(privateKeys[1]).getChecksumAddressString(),
   Wallet.fromPrivateKey(privateKeys[2]).getChecksumAddressString(),
@@ -77,5 +77,5 @@ Object.assign(exports, {
   buildCreate2Address,
   encodeParam,
   privateKeys,
-  accounts,
+  wallets,
 });

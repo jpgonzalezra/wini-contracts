@@ -1,4 +1,4 @@
-const { buildCreate2Address, accounts } = require('./helpers/utils');
+const { buildCreate2Address, wallets } = require('./helpers/utils');
 
 const WiniWallet = artifacts.require('./Wallet.sol');
 const WalletProxyFactory = artifacts.require('./WalletProxyFactory.sol');
@@ -8,8 +8,8 @@ contract('WalletProxyFactory contract', () => {
   let factory;
   let wallet;
 
-  const alice = accounts[0];
-  const bob = accounts[1];
+  const alice = wallets[0];
+  const bob = wallets[1];
   let deploymentBytecode;
 
   before(async function () {
