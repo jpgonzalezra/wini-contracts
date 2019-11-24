@@ -1,31 +1,15 @@
-const Wallet = require('ethereumjs-wallet');
-const ethUtils = require('ethereumjs-util');
-const { buildCreate2Address } = require('./helpers/utils');
+const { buildCreate2Address, accounts } = require('./helpers/utils');
 
 const WiniWallet = artifacts.require('./Wallet.sol');
 const WalletProxyFactory = artifacts.require('./WalletProxyFactory.sol');
 const { expectEvent, expectRevert } = require('openzeppelin-test-helpers');
 
-const privateKeys = [
-  ethUtils.toBuffer('0xced26e4f0ad256777efa4b205ac3003eca7e1befb9f657be58600b7115a6cdf1'),
-  ethUtils.toBuffer('0x3132ce18b38230af1f8d751f5658c97e59d33a9e884676fddfc9cc4434cd36fb'),
-  ethUtils.toBuffer('0x087df46b73931fd31751e80a203bb6be011f3ab2cf1930b2a92db901f0fdffc6'),
-  ethUtils.toBuffer('0xeb558208fc7e52bc018d11414e6e624d0ab44a7cb63dfad9d75f913b45268746'),
-];
-
-const wallets = [
-  Wallet.fromPrivateKey(privateKeys[0]),
-  Wallet.fromPrivateKey(privateKeys[1]),
-  Wallet.fromPrivateKey(privateKeys[2]),
-  Wallet.fromPrivateKey(privateKeys[3]),
-];
-
 contract('WalletProxyFactory contract', () => {
   let factory;
   let wallet;
 
-  const alice = wallets[0].getAddressString();
-  const bob = wallets[1].getAddressString();
+  const alice = accounts[0];
+  const bob = accounts[1];
   let deploymentBytecode;
 
   before(async function () {
