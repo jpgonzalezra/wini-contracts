@@ -10,7 +10,10 @@ contract FeeTransactionBridge is Collector, ReentrancyGuard {
 
     IERC20 public token;
 
-    constructor (address _tokenAddress, address _collector) Collector(_collector) public {
+    constructor (
+        address _tokenAddress,
+        address _collector
+    ) public Collector(_collector)  {
         token = IERC20(_tokenAddress);
     }
 
@@ -19,7 +22,7 @@ contract FeeTransactionBridge is Collector, ReentrancyGuard {
         uint256 _value,
         uint256 _fee,
         bytes calldata _signature
-    ) nonReentrant external {
+    ) external nonReentrant {
         Wallet wallet = Wallet(msg.sender);
         bytes32 hash = keccak256(
             abi.encodePacked(
