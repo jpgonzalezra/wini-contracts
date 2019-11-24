@@ -53,7 +53,7 @@ contract('Wini Wallet wallets', function (accounts) {
     });
     it('Should fail to init Wini Wallet source', async function () {
       const wini = await Wallet.at(await creator.walletImplementation());
-      await expectRevert(wini.init(alice), 'Signer already defined');
+      await expectRevert(wini.init(alice), 'Wallet already defined');
     });
   });
   describe('Relay intents', function () {

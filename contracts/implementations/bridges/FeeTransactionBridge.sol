@@ -1,21 +1,17 @@
 pragma solidity 0.5.10;
 
 import "./../../Wallet.sol";
-import "./../../common/Collector.sol";
+import "./../../common/ReceiptERC20Fee.sol";
 import "openzeppelin-solidity/contracts/utils/ReentrancyGuard.sol";
-import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 
+/// @dev charges the end user for gas costs in an application-specific ERC20 token
+contract FeeTransactionBridge is ReceiptERC20Fee, ReentrancyGuard {
 
-contract FeeTransactionBridge is Collector, ReentrancyGuard {
-
-    IERC20 public token;
-
+    // solhint-disable-next-line no-empty-blocks
     constructor (
         address _tokenAddress,
         address _collector
-    ) public Collector(_collector)  {
-        token = IERC20(_tokenAddress);
-    }
+    ) public ReceiptERC20Fee(_tokenAddress, _collector)  {}
 
     function execute(
         address _to,
@@ -32,9 +28,9 @@ contract FeeTransactionBridge is Collector, ReentrancyGuard {
                 _fee
             )
         );
-        require(wallet.signer() == ECDSA.recover(hash, _signature), "Invalid signature");
+        require(wallet.signer() == ECDSA.recover(hash, _signature), "FeeTransactionBridge/invalid-signature"); // Is this necessary?
         require(token.transferFrom(msg.sender, _to, _value));
-        require(token.transferFrom(msg.sender, getCollector(), _fee));
+        transferFee(_fee);
     }
 
 }
