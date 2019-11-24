@@ -11,7 +11,7 @@ contract ReceiptERC20Fee is Collector {
     constructor (
         address _tokenAddress,
         address _collector
-    ) Collector(_collector) public {
+    ) public Collector(_collector) {
         token = IERC20(_tokenAddress);
     }
 

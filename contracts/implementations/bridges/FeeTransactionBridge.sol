@@ -7,11 +7,12 @@ import "openzeppelin-solidity/contracts/utils/ReentrancyGuard.sol";
 /// @dev charges the end user for gas costs in an application-specific ERC20 token
 contract FeeTransactionBridge is ReceiptERC20Fee, ReentrancyGuard {
 
-    // solhint-disable-next-line no-empty-blocks
     constructor (
         address _tokenAddress,
         address _collector
-    ) public ReceiptERC20Fee(_tokenAddress, _collector)  {}
+    ) public ReceiptERC20Fee(_tokenAddress, _collector)  {
+        // solhint-disable-previous-line no-empty-blocks
+    }
 
     function execute(
         address _to,
