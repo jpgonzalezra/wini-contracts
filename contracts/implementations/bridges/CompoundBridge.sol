@@ -2,17 +2,16 @@ pragma solidity 0.5.10;
 
 import "./../../Wallet.sol";
 import "./../../interfaces/ICErc20.sol";
-import "./../../common/Collector.sol";
+import "./../../common/ReceiptERC20Fee.sol";
 import "openzeppelin-solidity/contracts/utils/ReentrancyGuard.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
-import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 
-
-contract CompoundBridge is Collector, ReentrancyGuard {
+/// @dev  * Bridge beetwen wini-contracts and compound.
+///       * charges the end user for gas costs in an application-specific ERC20 token
+contract CompoundBridge is ReceiptERC20Fee, ReentrancyGuard {
 
     using SafeMath for uint;
 
-    IERC20 public token;
     ICErc20 public cToken;
 
     event Mint(address indexed _sender, uint256 _value);
@@ -22,11 +21,10 @@ contract CompoundBridge is Collector, ReentrancyGuard {
         address _tokenAddress,
         address _cTokenAddress,
         address _collector
-    ) public Collector(_collector) {
+    ) public ReceiptERC20Fee(_tokenAddress, _collector) {
         cToken = ICErc20(_cTokenAddress);
-        token = IERC20(_tokenAddress);
         require(cToken.isCToken());
-        require(cToken.underlying() == _tokenAddress, "the underlying are different");
+        require(cToken.underlying() == _tokenAddress, "CompoundBridge/underlying-different");
 
         token.approve(address(cToken), uint256(-1));
     }
@@ -44,17 +42,17 @@ contract CompoundBridge is Collector, ReentrancyGuard {
                 _fee
             )
         );
-        require(wallet.signer() == ECDSA.recover(hash, _signature), "Invalid signature");
+        require(wallet.signer() == ECDSA.recover(hash, _signature), "CompoundBridge/invalid-signature"); // TODO: Is this necessary?
 
-        require(token.transferFrom(msg.sender, getCollector(), _fee), "the transferFrom method to relayer failed");
-        require(token.transferFrom(msg.sender, address(this), _value), "Pull token failed");
+        transferFee(_fee);
+        require(token.transferFrom(msg.sender, address(this), _value), "CompoundBridge/pull-token-failed");
 
         uint preMintBalance = cToken.balanceOf(address(this));
-        require(cToken.mint(_value) == 0, "underlying mint failed");
+        require(cToken.mint(_value) == 0, "CompoundBridge/underlying-mint-failed");
         uint postMintBalance = cToken.balanceOf(address(this));
 
         uint mintedTokens = postMintBalance.sub(preMintBalance);
-        require(cToken.transfer(msg.sender, mintedTokens), "The transfer method failed");
+        require(cToken.transfer(msg.sender, mintedTokens), "CompoundBridge/transfer-failed");
 
         emit Mint(msg.sender, mintedTokens);
 
@@ -73,13 +71,13 @@ contract CompoundBridge is Collector, ReentrancyGuard {
                 _fee
             )
         );
-        require(wallet.signer() == ECDSA.recover(hash, _signature), "Invalid signature");
+        require(wallet.signer() == ECDSA.recover(hash, _signature), "CompoundBridge/invalid-signature"); // TODO: Is this necessary?
 
-        require(token.transferFrom(msg.sender, getCollector(), _fee));
+        transferFee(_fee);
+        require(cToken.transferFrom(msg.sender, address(this), _value), "CompoundBridge/pull-token-failed");
 
-        require(cToken.transferFrom(msg.sender, address(this), _value), "Pull token failed");
         uint preDaiBalance = token.balanceOf(address(this));
-        require(cToken.redeem(_value) == 0, "Underlying redeeming failed");
+        require(cToken.redeem(_value) == 0, "CompoundBridge/underlying-redeeming-failed");
         uint postDaiBalance = token.balanceOf(address(this));
 
         uint redeemedDai = postDaiBalance.sub(preDaiBalance);

@@ -14,7 +14,7 @@
     "lint:js": "eslint .",
     "lint:js:fix": "eslint . --fix",
     "lint:sol": "solhint --max-warnings 0 \"contracts/**/*.sol\"",
-    "test": "rimraf build && truffle compile && ./scripts/test.sh",
+    "test": "rimraf build && truffle compile && truffle test",
     "flat": "bash scripts/make_flat.sh"
   },
   "repository": {

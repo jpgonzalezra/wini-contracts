@@ -52,7 +52,7 @@ contract WalletExecutor {
             )
         );
 
-        // Validate Intent not expired, gas price and dependencies
+        // Validate Intent.
         // solhint-disable-next-line not-rely-on-time
         require(tx.gasprice < maxGasPrice, "Gas price too high");
 
@@ -69,7 +69,7 @@ contract WalletExecutor {
             )
         ).value(value)(data);
 
-        // Emit receipt with result of the call
+        // Emit receipt with call result.
         emit IntentExecuted(
             id,
             success,
